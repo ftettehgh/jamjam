@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapPin, Package, Search, Clock, CreditCard, User, Star, Navigation, CheckCircle2, ChevronRight, Bike, Phone, MessageSquare, History, Menu, X, Plus, Send, Home, ShoppingBag, Info, Wallet, Smartphone, Banknote } from 'lucide-react';
+import logoImage from '@/assets/logo.jpg';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderHistory } from './OrderHistory';
 import { ProfilePage } from './ProfilePage';
@@ -489,10 +490,7 @@ export const DeliveryApp = () => {
             <Menu className="w-6 h-6" />
           </button>
           <button onClick={() => setCurrentPage('home')} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="bg-gradient-to-br from-pink-600 to-pink-500 p-2 rounded-xl">
-              <Bike className="w-6 h-6 text-white" />
-            </div>
-            <h1 className="text-xl font-bold tracking-tight text-white">JamJam</h1>
+            <img src={logoImage} alt="JamJam" className="h-12 object-contain" />
           </button>
         </div>
         
