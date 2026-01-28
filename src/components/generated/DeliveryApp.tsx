@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MapPin, Package, Search, Clock, CreditCard, User, Star, Navigation, CheckCircle2, ChevronRight, Bike, Phone, MessageSquare, History, Menu, X, Plus, Send, Home, ShoppingBag, Info, Wallet, Smartphone, Banknote } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+declare global {
+  interface Window {
+    PaystackPop: any;
+  }
+}
 import { OrderHistory } from './OrderHistory';
 import { ProfilePage } from './ProfilePage';
 import { RiderBroadcast, BroadcastRider, RouteSegmentInfo } from './RiderBroadcast';
@@ -430,33 +436,61 @@ export const DeliveryApp = () => {
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
     setSelectedPaymentMethod(method);
   };
+  const handlePaymentSuccess = () => {
+    setIsProcessingPayment(false);
+    setStep(5);
+    setStatus('searching');
+
+    if (!isMultiRider) {
+      setTimeout(() => {
+        setStatus('assigned');
+        setSelectedRider(AVAILABLE_RIDERS[0]);
+      }, 2000);
+    } else {
+      setTimeout(() => {
+        setStatus('picked_up');
+        setCurrentSegment(1);
+        setTimeout(() => {
+          setStatus('in_transit');
+        }, 3000);
+      }, 2000);
+    }
+  };
+
   const handlePaymentConfirm = () => {
     if (!selectedPaymentMethod) return;
     setIsProcessingPayment(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-      setStep(5); // Move directly to tracking instead of contact details
-      setStatus('searching');
-
-      // Auto-progress to tracking for single rider
-      if (!isMultiRider) {
-        setTimeout(() => {
-          setStatus('assigned');
-          setSelectedRider(AVAILABLE_RIDERS[0]);
-        }, 2000);
-      } else {
-        // For multi-rider, auto-progress
-        setTimeout(() => {
-          setStatus('picked_up');
-          setCurrentSegment(1);
-          setTimeout(() => {
-            setStatus('in_transit');
-          }, 3000);
-        }, 2000);
+    if (selectedPaymentMethod === 'card') {
+      const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+      
+      if (!paystackKey) {
+        alert('Payment configuration error. Please contact support.');
+        setIsProcessingPayment(false);
+        return;
       }
-    }, 2000);
+
+      const paystack = new window.PaystackPop();
+      paystack.newTransaction({
+        key: paystackKey,
+        email: 'customer@jamjam.delivery',
+        amount: Math.round(totalPrice * 100),
+        currency: 'GHS',
+        ref: 'JJ_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        onSuccess: (transaction: any) => {
+          console.log('Payment successful:', transaction.reference);
+          handlePaymentSuccess();
+        },
+        onCancel: () => {
+          console.log('Payment cancelled');
+          setIsProcessingPayment(false);
+        }
+      });
+    } else {
+      setTimeout(() => {
+        handlePaymentSuccess();
+      }, 2000);
+    }
   };
   const resetOrder = () => {
     setStep(1);
